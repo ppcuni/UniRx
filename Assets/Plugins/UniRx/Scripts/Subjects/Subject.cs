@@ -142,11 +142,14 @@ namespace UniRx
             readonly object gate = new object();
             Subject<T> parent;
             IObserver<T> unsubscribeTarget;
+            string _key;
 
             public Subscription(Subject<T> parent, IObserver<T> unsubscribeTarget)
             {
                 this.parent = parent;
                 this.unsubscribeTarget = unsubscribeTarget;
+                _key = SubscriptionCounter.CreateKey();
+                SubscriptionCounter.Add(_key);
             }
 
             public void Dispose()
@@ -169,9 +172,24 @@ namespace UniRx
 
                             unsubscribeTarget = null;
                             parent = null;
+                            RemoveKey();
                         }
                     }
                 }
+            }
+
+            private void RemoveKey()
+            {
+                if (_key != null)
+                {
+                    SubscriptionCounter.Remove(_key);
+                    _key = null;
+                }
+            }
+
+            ~Subscription()
+            {
+                RemoveKey();
             }
         }
     }
